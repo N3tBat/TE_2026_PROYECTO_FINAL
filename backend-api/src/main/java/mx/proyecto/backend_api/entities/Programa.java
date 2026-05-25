@@ -1,6 +1,7 @@
 package mx.proyecto.backend_api.entities;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class Programa {
 
     // Relación N:M con Profesores
     @ManyToMany(mappedBy = "programasAsignados")
+    @JsonIgnore
     private List<Profesor> profesores;
 
     // --- GETTERS Y SETTERS ---

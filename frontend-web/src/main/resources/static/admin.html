@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - FES Aragón</title>
+    <!-- FontAwesome para íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Outfit y Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Script de seguridad (Route Guard) inmediato para evitar parpadeos no autorizados -->
+    <script>
+        (function() {
+            const token = localStorage.getItem('jwt_token');
+            const rol = localStorage.getItem('user_role');
+            // Verificamos si existe sesión y si es administrador
+            if (!token || (rol !== 'ROLE_ADMIN' && rol !== 'ADMIN')) {
+                window.location.replace('/index.html');
+            }
+        })();
+    </script>
+
+    <style>
+        :root {
+            --unam-blue: #003366; /* Azul FES Aragón */
+            --unam-gold: #F4D35E; /* Oro FES Aragón */
+            --text-dark: #1E293B;
+            --text-light: #64748B;
+            --bg-light: #F8FAFC;
+            --white: #FFFFFF;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Open Sans', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- BARRA LATERAL (SIDEBAR) --- */
+        .sidebar {
+            width: 280px;
+            background-color: var(--unam-blue);
+            color: var(--white);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+        }
+
+        /* Logotipo FES Aragón estilo Figma */
+        .sidebar-brand {
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-bottom: 2px solid var(--unam-gold);
+        }
+
+        .brand-logo-frame {
+            border: 2px solid var(--unam-gold);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .brand-logo-frame i {
+            font-size: 2rem;
+            color: var(--unam-gold);
+        }
+
+        .brand-logo-text {
+            font-weight: 700;
+            font-size: 0.95rem;
+            line-height: 1.1;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .brand-subtext {
+            font-size: 0.78rem;
+            font-weight: 400;
+            text-align: center;
+            line-height: 1.3;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Menú de Navegación */
+        .sidebar-menu {
+            list-style: none;
+            padding: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex-grow: 1;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 25px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 1.05rem;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .menu-item a i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        /* Estados Hover y Activos */
+        .menu-item a:hover {
+            color: var(--white);
+            background-color: rgba(255, 255, 255, 0.05);
+            border-left-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .menu-item.active a {
+            color: var(--white);
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--unam-gold);
+            font-weight: 600;
+        }
+
+        .menu-item.active a i {
+            color: var(--unam-gold);
+            transform: scale(1.1);
+        }
+
+        /* --- BOTÓN DE SALIDA --- */
+        .logout-btn-container {
+            padding: 20px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.08);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background-color: #ef4444;
+            border-color: #ef4444;
+            color: var(--white);
+        }
+
+        /* --- PANEL DE CONTENIDO PRINCIPAL --- */
+        .main-container {
+            margin-left: 280px;
+            flex-grow: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Encabezado Superior estilo Figma */
+        .top-header {
+            height: 60px;
+            background-color: var(--unam-blue);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .user-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid var(--unam-gold);
+            font-size: 1.15rem;
+            color: var(--unam-gold);
+        }
+
+        /* Contenedor del Cuerpo de la Vista */
+        .content-body {
+            padding: 40px;
+            flex-grow: 1;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* --- VISTA: INICIO (ESTILO FIGMA MOCKUP) --- */
+        .metrics-grid {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        /* Tarjeta de métrica con marco color oro de Figma */
+        .metric-card {
+            background-color: var(--white);
+            border: 3px solid var(--unam-gold);
+            border-radius: 20px;
+            width: 320px;
+            padding: 30px 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.03);
+            transition: var(--transition);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .metric-icon-wrapper {
+            font-size: 1.8rem;
+            color: var(--unam-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .metric-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--unam-blue);
+        }
+
+        .metric-value {
+            font-size: 4.8rem;
+            font-weight: 700;
+            color: var(--unam-blue);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        /* --- COMPONENTES MODERNOS PARA OTRAS SECCIONES (Tablas y Formularios) --- */
+        .section-header {
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            color: var(--unam-blue);
+            font-weight: 700;
+        }
+
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        /* Estilos de Tabla */
+        .table-container {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+            border: 1px solid #E2E8F0;
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .modern-table th {
+            background-color: #F1F5F9;
+            color: var(--text-dark);
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .modern-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .modern-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Estilización de enlaces del número de proyectos */
+        .project-count-badge {
+            background-color: rgba(0, 51, 102, 0.08);
+            color: var(--unam-blue);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-block;
+            transition: var(--transition);
+            text-decoration: none;
+            border: 1px dashed var(--unam-blue);
+        }
+
+        .project-count-badge:hover {
+            background-color: var(--unam-blue);
+            color: var(--white);
+            transform: scale(1.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .badge-active {
+            background-color: #DCFCE7;
+            color: #15803D;
+        }
+
+        .badge-inactive {
+            background-color: #F1F5F9;
+            color: #64748B;
+        }
+
+        /* Botones de acción */
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-right: 12px;
+            transition: var(--transition);
+        }
+
+        .edit-btn {
+            color: var(--unam-blue);
+        }
+
+        .edit-btn:hover {
+            color: var(--unam-gold);
+            transform: scale(1.15);
+        }
+
+        .delete-btn {
+            color: #EF4444;
+        }
+
+        .delete-btn:hover {
+            color: #B91C1C;
+            transform: scale(1.15);
+        }
+
+        /* Estilos de Formularios Modernos */
+        .form-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid #E2E8F0;
+        }
+
+        .form-card h3 {
+            font-size: 1.2rem;
+            color: var(--unam-blue);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--unam-blue);
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background-color: var(--unam-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .submit-btn:hover {
+            background-color: #002347;
+            transform: translateY(-1px);
+        }
+
+        /* --- MODALES PREMIUM --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-card {
+            background-color: var(--white);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 520px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            position: relative;
+            animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--unam-gold);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: var(--unam-blue);
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .modal-close-icon {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close-icon:hover {
+            color: #ef4444;
+        }
+
+        .modal-body {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .modal-contact-header {
+            background-color: rgba(244, 211, 94, 0.15);
+            border-left: 4px solid var(--unam-gold);
+            padding: 10px 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: var(--unam-blue);
+            font-size: 0.9rem;
+        }
+
+        /* Lista de proyectos asignados */
+        .project-modal-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .project-modal-item {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-modal-item span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        /* Checkbox de edición de proyectos */
+        .edit-project-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 25px;
+            padding-right: 5px;
+        }
+
+        .edit-project-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .edit-project-option:hover {
+            border-color: var(--unam-blue);
+            background: rgba(0, 51, 102, 0.02);
+        }
+
+        .edit-project-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--unam-blue);
+        }
+
+        .edit-project-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        @keyframes modalSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-container {
+                margin-left: 0;
+            }
+            .two-column-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- --- BARRA LATERAL (SIDEBAR) --- -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo-frame">
+                <i class="fa-solid fa-building-columns"></i>
+                <div class="brand-logo-text">UNAM<br>FES Aragón</div>
+            </div>
+            <div class="brand-subtext">Sistema de Control de Horas de Servicio Social</div>
+        </div>
+
+        <nav style="flex-grow: 1;">
+            <ul class="sidebar-menu">
+                <li class="menu-item active" id="menu-inicio">
+                    <a onclick="switchTab('inicio')">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Inicio</span>
+                    </a>
+                </li>
+                <li class="menu-item" id="menu-programas">
+                    <a onclick="switchTab('programas')">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                        <span>Programas</span>
+                    </a>
+                </li>
+                <li class="menu-item" id="menu-profesores">
+                    <a onclick="switchTab('profesores')">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <span>Profesores</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="logout-btn-container">
+            <button class="logout-btn" id="btn-logout">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- --- CONTENEDOR PRINCIPAL --- -->
+    <div class="main-container">
+        
+        <!-- Encabezado superior idéntico al Figma -->
+        <header class="top-header">
+            <div class="user-profile">
+                <span class="user-name" id="display-admin-name">Administrador con nombre</span>
+                <div class="user-avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- --- CUERPO DEL PANEL --- -->
+        <main class="content-body">
+            
+            <!-- --- VISTA: INICIO (ESTILO FIGMA) --- -->
+            <section id="section-inicio" class="view-section active">
+                <div class="metrics-grid">
+                    
+                    <!-- Tarjeta Programas Activos -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon-wrapper">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                            </div>
+                            <span class="metric-title">Programas Activos</span>
+                        </div>
+                        <div class="metric-value" id="stats-programas-count">0</div>
+                    </div>
+
+                    <!-- Tarjeta Profesores Activos -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon-wrapper">
+                                <i class="fa-solid fa-circle-user"></i>
+                            </div>
+                            <span class="metric-title">Profesores activos</span>
+                        </div>
+                        <div class="metric-value" id="stats-profesores-count">0</div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- --- VISTA: PROGRAMAS --- -->
+            <section id="section-programas" class="view-section">
+                <div class="section-header">
+                    <h2>Gestión de Programas de Servicio Social</h2>
+                </div>
+                <div class="two-column-layout">
+                    
+                    <div class="table-container">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre del Programa</th>
+                                    <th>Área Responsable</th>
+                                    <th>Horas Req.</th>
+                                    <th>F. Término</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="programs-table-body">
+                                <!-- Cargado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="form-card">
+                        <h3>Registrar Nuevo Programa</h3>
+                        <form id="form-new-program">
+                            <div class="form-group">
+                                <label for="prog-name">Nombre del programa:</label>
+                                <input type="text" id="prog-name" class="form-control" placeholder="Ej. Apoyo en Biblioteca" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prog-area">Área responsable:</label>
+                                <input type="text" id="prog-area" class="form-control" placeholder="Ej. Biblioteca Central" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prog-horas">Horas requeridas:</label>
+                                <input type="number" id="prog-horas" class="form-control" value="480" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prog-fecha-termino">Fecha de Término:</label>
+                                <input type="date" id="prog-fecha-termino" class="form-control" required>
+                            </div>
+                            <button type="submit" class="submit-btn">Crear Programa</button>
+                        </form>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- --- VISTA: PROFESORES --- -->
+            <section id="section-profesores" class="view-section">
+                <div class="section-header">
+                    <h2>Gestión de Profesores</h2>
+                </div>
+                <div class="two-column-layout">
+                    
+                    <div class="table-container">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Profesor</th>
+                                    <th>Carrera</th>
+                                    <th style="text-align: center;">Proyectos</th>
+                                    <th>Estado</th>
+                                    <th style="text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="professors-table-body">
+                                <!-- Cargado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="form-card">
+                        <h3>Registrar Profesor</h3>
+                        <form id="form-new-professor">
+                            <div class="form-group">
+                                <label for="prof-name">Nombre Completo:</label>
+                                <input type="text" id="prof-name" class="form-control" placeholder="Nombre y Apellidos" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prof-email">Correo Institucional:</label>
+                                <input type="email" id="prof-email" class="form-control" placeholder="ejemplo@aragon.unam.mx" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prof-pass">Contraseña:</label>
+                                <input type="password" id="prof-pass" class="form-control" placeholder="Contraseña de acceso" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prof-carrera">Carrera:</label>
+                                <select id="prof-carrera" class="form-control" required>
+                                    <option value="">Seleccione carrera</option>
+                                    <option value="ICO">ICO (Ing. en Computación)</option>
+                                    <option value="IEE">IEE (Ing. Eléctrica y Electrónica)</option>
+                                    <option value="IM">IM (Ing. Mecánica)</option>
+                                    <option value="II">II (Ing. Industrial)</option>
+                                    <option value="IC">IC (Ing. Civil)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="submit-btn">Registrar Profesor</button>
+                        </form>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- --- POP-UP 1: MOSTRAR DETALLES DE PROYECTOS DEL DOCENTE --- -->
+    <div class="modal-overlay" id="modal-project-details">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-details-title">Proyectos de</h3>
+                <button class="modal-close-icon" onclick="closeModal('modal-project-details')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-contact-header" id="modal-details-contact">
+                    Contacto: correo@aragon.unam.mx
+                </div>
+                <ul class="project-modal-list" id="modal-details-list">
+                    <!-- Cargados dinámicamente -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- POP-UP 2: ASIGNACIÓN / EDICIÓN DE PROYECTOS --- -->
+    <div class="modal-overlay" id="modal-edit-assignments">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-edit-title">Asignar Proyectos</h3>
+                <button class="modal-close-icon" onclick="closeModal('modal-edit-assignments')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; font-weight: 500; font-size: 0.9rem; color: var(--text-light);">
+                    Selecciona los programas activos que deseas asignar a este profesor:
+                </p>
+                <div class="edit-project-list" id="modal-edit-list">
+                    <!-- Checkboxes cargados dinámicamente -->
+                </div>
+                <button class="submit-btn" id="btn-save-assignments">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- LÓGICA DINÁMICA DEL PANEL --- -->
+    <script>
+        const API_URL = 'http://localhost:8080';
+        let profesoresData = [];
+        let programasData = [];
+        let selectedProfesorIdForEdit = null;
+
+        // Recuperar Token JWT
+        const getAuthHeader = () => {
+            const token = localStorage.getItem('jwt_token');
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        };
+
+        // Inyectar nombre del administrador dinámicamente
+        document.addEventListener('DOMContentLoaded', () => {
+            const adminName = localStorage.getItem('user_name');
+            const displayEl = document.getElementById('display-admin-name');
+            displayEl.textContent = adminName || "Administrador Principal";
+            
+            // Cargar datos del servidor
+            loadAllData();
+        });
+
+        // Cargar todos los datos desde el Backend API
+        async function loadAllData() {
+            try {
+                // 1. Obtener programas
+                const resProgs = await fetch(`${API_URL}/programas`, { headers: getAuthHeader() });
+                if (resProgs.ok) {
+                    programasData = await resProgs.json();
+                }
+
+                // 2. Obtener profesores
+                const resProfs = await fetch(`${API_URL}/profesores`, { headers: getAuthHeader() });
+                if (resProfs.ok) {
+                    profesoresData = await resProfs.json();
+                }
+
+                // 3. Renderizar las tablas e indicadores
+                renderProgramsTable();
+                renderProfessorsTable();
+                calculateAndRenderStats();
+
+            } catch (err) {
+                console.error("Error al cargar datos desde el servidor:", err);
+            }
+        }
+
+        // --- CÁLCULO DE LA REGLA DE LAS 2 SEMANAS ---
+        // Evalúa si un programa está activo basándose en su estado y si no ha expirado por más de 14 días
+        function isProgramActive(program) {
+            if (!program) return false;
+            if (program.estado !== 'activo') return false;
+            
+            if (program.fechaTermino) {
+                const limitDate = new Date(program.fechaTermino);
+                // Le sumamos 14 días naturales (2 semanas) de prórroga
+                limitDate.setDate(limitDate.getDate() + 14);
+                
+                const currentDate = new Date();
+                return currentDate <= limitDate;
+            }
+            return true;
+        }
+
+        // Determina si un profesor está activo si tiene al menos un programa activo asignado
+        function isProfesorActive(profesor) {
+            if (!profesor.programasAsignados || profesor.programasAsignados.length === 0) {
+                return false;
+            }
+            return profesor.programasAsignados.some(prog => {
+                // Buscamos el programa completo para tener la fecha de término real
+                const fullProg = programasData.find(p => p.id === prog.id);
+                return isProgramActive(fullProg);
+            });
+        }
+
+        // --- RENDERIZADO DE TABLAS ---
+
+        function renderProgramsTable() {
+            const tbody = document.getElementById('programs-table-body');
+            tbody.innerHTML = '';
+
+            programasData.forEach(p => {
+                const isActive = isProgramActive(p);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${p.nombre}</td>
+                    <td>${p.areaResponsable}</td>
+                    <td>${p.horasRequeridas} hrs</td>
+                    <td>${p.fechaTermino || 'N/A'}</td>
+                    <td><span class="badge ${isActive ? 'badge-active' : 'badge-inactive'}">${isActive ? 'Activo' : 'Concluido'}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderProfessorsTable() {
+            const tbody = document.getElementById('professors-table-body');
+            tbody.innerHTML = '';
+
+            profesoresData.forEach(prof => {
+                const projectCount = prof.programasAsignados ? prof.programasAsignados.length : 0;
+                const isActive = isProfesorActive(prof);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${prof.nombreCompleto}</td>
+                    <td style="font-weight: 600; color: var(--text-light);">${prof.carrera || 'N/A'}</td>
+                    <td style="text-align: center;">
+                        <a class="project-count-badge" onclick="openDetailsModal(${prof.id})">${projectCount}</a>
+                    </td>
+                    <td>
+                        <span class="badge ${isActive ? 'badge-active' : 'badge-inactive'}">
+                            ${isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td style="text-align: center;">
+                        <button class="action-btn edit-btn" onclick="openEditModal(${prof.id})" title="Asignar Proyectos">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteProfessor(${prof.id})" title="Eliminar Profesor">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function calculateAndRenderStats() {
+            // Programas activos
+            const activePrograms = programasData.filter(isProgramActive).length;
+            document.getElementById('stats-programas-count').textContent = activePrograms;
+
+            // Profesores activos
+            const activeProfs = profesoresData.filter(isProfesorActive).length;
+            document.getElementById('stats-profesores-count').textContent = activeProfs;
+        }
+
+        // --- INTERACCIONES DE MODALES ---
+
+        // Modal 1: Consultar Proyectos de un Profesor
+        function openDetailsModal(profId) {
+            const prof = profesoresData.find(p => p.id === profId);
+            if (!prof) return;
+
+            document.getElementById('modal-details-title').textContent = `Proyectos de ${prof.nombreCompleto}`;
+            document.getElementById('modal-details-contact').textContent = `Contacto: ${prof.correo}`;
+            
+            const listEl = document.getElementById('modal-details-list');
+            listEl.innerHTML = '';
+
+            if (!prof.programasAsignados || prof.programasAsignados.length === 0) {
+                listEl.innerHTML = `<li style="text-align:center; padding: 15px; color:var(--text-light);">No tiene proyectos asignados actualmente.</li>`;
+            } else {
+                prof.programasAsignados.forEach(prog => {
+                    const fullProg = programasData.find(p => p.id === prog.id);
+                    const isActive = isProgramActive(fullProg);
+                    const li = document.createElement('li');
+                    li.className = 'project-modal-item';
+                    li.innerHTML = `
+                        <div>
+                            <div>${prog.nombre}</div>
+                            <small style="color:var(--text-light); font-size:0.75rem;">Termina el: ${fullProg ? (fullProg.fechaTermino || 'N/A') : 'N/A'}</small>
+                        </div>
+                        <span class="badge ${isActive ? 'badge-active' : 'badge-inactive'}">${isActive ? 'Activo' : 'Vencido'}</span>
+                    `;
+                    listEl.appendChild(li);
+                });
+            }
+
+            document.getElementById('modal-project-details').classList.add('show');
+        }
+
+        // Modal 2: Editar / Asignar Proyectos Activos a un Profesor
+        function openEditModal(profId) {
+            const prof = profesoresData.find(p => p.id === profId);
+            if (!prof) return;
+
+            selectedProfesorIdForEdit = profId;
+            document.getElementById('modal-edit-title').textContent = `Asignar Proyectos a ${prof.nombreCompleto}`;
+            
+            const listEl = document.getElementById('modal-edit-list');
+            listEl.innerHTML = '';
+
+            // Filtrar programas del sistema que están actualmente ACTIVOS (incluyendo la prórroga de 2 semanas)
+            const activeProgs = programasData.filter(isProgramActive);
+
+            if (activeProgs.length === 0) {
+                listEl.innerHTML = `<p style="text-align:center; color:var(--text-light); padding:10px;">No hay programas activos en el sistema para asignar.</p>`;
+            } else {
+                activeProgs.forEach(prog => {
+                    // Verificar si el profesor ya tiene este programa asignado
+                    const isAssigned = prof.programasAsignados && prof.programasAsignados.some(p => p.id === prog.id);
+
+                    const label = document.createElement('label');
+                    label.className = 'edit-project-option';
+                    label.innerHTML = `
+                        <input type="checkbox" value="${prog.id}" ${isAssigned ? 'checked' : ''}>
+                        <div class="edit-project-label">
+                            <div>${prog.nombre}</div>
+                            <small style="color:var(--text-light); display:block; font-size:0.75rem;">Responsable: ${prog.areaResponsable}</small>
+                        </div>
+                    `;
+                    listEl.appendChild(label);
+                });
+            }
+
+            document.getElementById('modal-edit-assignments').classList.add('show');
+        }
+
+        // Guardar las asignaciones seleccionadas en el Modal 2
+        document.getElementById('btn-save-assignments').addEventListener('click', async () => {
+            if (!selectedProfesorIdForEdit) return;
+
+            // Obtener los IDs de programas seleccionados
+            const checkedBoxes = document.querySelectorAll('#modal-edit-list input[type="checkbox"]:checked');
+            const selectedProgramas = Array.from(checkedBoxes).map(cb => {
+                return { id: parseInt(cb.value) };
+            });
+
+            try {
+                // Hacer petición PATCH al backend para actualizar los programas asignados
+                const response = await fetch(`${API_URL}/profesores/${selectedProfesorIdForEdit}`, {
+                    method: 'PATCH',
+                    headers: getAuthHeader(),
+                    body: JSON.stringify({
+                        programasAsignados: selectedProgramas
+                    })
+                });
+
+                if (response.ok) {
+                    closeModal('modal-edit-assignments');
+                    loadAllData(); // Recargar datos para refrescar la tabla e indicadores
+                } else {
+                    alert("Error al actualizar las asignaciones.");
+                }
+
+            } catch (err) {
+                console.error("Error al guardar cambios de asignación:", err);
+            }
+        });
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // --- ACCIONES DE FORMULARIOS ---
+
+        // Registrar Nuevo Profesor (Conexión Real con base de datos)
+        document.getElementById('form-new-professor').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById('prof-name').value;
+            const correo = document.getElementById('prof-email').value;
+            const password = document.getElementById('prof-pass').value;
+            const carrera = document.getElementById('prof-carrera').value;
+
+            try {
+                const response = await fetch(`${API_URL}/profesores`, {
+                    method: 'POST',
+                    headers: getAuthHeader(),
+                    body: JSON.stringify({
+                        nombreCompleto: nombre,
+                        correo: correo,
+                        password: password,
+                        carrera: carrera
+                    })
+                });
+
+                if (response.ok) {
+                    alert("¡Profesor registrado exitosamente en el sistema!");
+                    document.getElementById('form-new-professor').reset();
+                    loadAllData(); // Recargar la tabla dinámicamente
+                } else {
+                    const errMsg = await response.text();
+                    alert(`Error: ${errMsg || 'No se pudo registrar al profesor'}`);
+                }
+
+            } catch (err) {
+                console.error("Error al registrar profesor:", err);
+                alert("Error de conexión al guardar en el servidor.");
+            }
+        });
+
+        // Registrar Nuevo Programa
+        document.getElementById('form-new-program').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById('prog-name').value;
+            const area = document.getElementById('prog-area').value;
+            const horas = parseInt(document.getElementById('prog-horas').value);
+            const fechaTermino = document.getElementById('prog-fecha-termino').value;
+
+            try {
+                const response = await fetch(`${API_URL}/programas`, {
+                    method: 'POST',
+                    headers: getAuthHeader(),
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        areaResponsable: area,
+                        horasRequeridas: horas,
+                        fechaTermino: fechaTermino,
+                        estado: 'activo'
+                    })
+                });
+
+                if (response.ok) {
+                    alert("¡Programa creado exitosamente!");
+                    document.getElementById('form-new-program').reset();
+                    loadAllData();
+                } else {
+                    alert("Error al crear el programa.");
+                }
+
+            } catch (err) {
+                console.error("Error al crear programa:", err);
+            }
+        });
+
+        // Eliminar Profesor
+        async function deleteProfessor(id) {
+            if (!confirm("¿Está seguro de que desea eliminar a este profesor? Se borrarán también sus credenciales de inicio de sesión de forma automática.")) return;
+
+            try {
+                const response = await fetch(`${API_URL}/profesores/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeader()
+                });
+
+                if (response.ok) {
+                    loadAllData();
+                } else {
+                    alert("Error al intentar eliminar el profesor.");
+                }
+
+            } catch (err) {
+                console.error("Error al eliminar profesor:", err);
+            }
+        }
+
+        // Tab switcher interactivo
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            document.getElementById(`section-${tabId}`).classList.add('active');
+            document.getElementById(`menu-${tabId}`).classList.add('active');
+        }
+
+        // Cerrar sesión
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_name');
+            window.location.replace('/index.html');
+        });
+    </script>
+</body>
+</html>

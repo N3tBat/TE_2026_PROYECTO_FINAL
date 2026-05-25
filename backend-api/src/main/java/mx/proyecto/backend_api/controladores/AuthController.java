@@ -55,7 +55,10 @@ public class AuthController {
 
         final String jwt = jwtUtil.generateToken(userDetails, role);
 
-        return ResponseEntity.ok(new JwtResponse(jwt, role));
+        Usuario usuario = usuarioRepository.findByCorreo(authenticationRequest.getCorreo()).orElse(null);
+        String nombre = (usuario != null && usuario.getNombreCompleto() != null) ? usuario.getNombreCompleto() : "Administrador";
+
+        return ResponseEntity.ok(new JwtResponse(jwt, role, nombre));
     }
 
     @PostMapping("/registro")
