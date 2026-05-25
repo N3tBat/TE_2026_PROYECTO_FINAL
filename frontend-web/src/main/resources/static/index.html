@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión - FES Aragón</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Usamos FontAwesome para los íconos de las tarjetas -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Encabezado idéntico a image_1.png -->
+    <header class="main-header">
+        <div class="header-left">
+            <!-- Logotipo simulado con texto (en un entorno real aquí iría un <img> con el logo svg/png) -->
+            <div class="logo-container">
+                <div class="logo-icon"><i class="fa-solid fa-building-columns"></i> UNAM<br>FES Aragón</div>
+                <div class="logo-separator"></div>
+                <div class="logo-text">Sistema de<br>Control de Horas<br>de Servicio Social</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="admin-btn" id="btn-admin-login">Administrador</button>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="main-content">
+        <h1 class="page-title">INICIO DE SESIÓN</h1>
+        
+        <div class="login-container">
+            
+            <!-- Selector de Usuario (Caja de inicio de sesión de image_0.png) -->
+            <div id="user-selector" class="user-selector">
+                <div class="selection-card" id="card-alumno" role="button" tabindex="0">
+                    <h2 class="card-title">Alumno</h2>
+                    <div class="card-icon alumno-icon">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                </div>
+                
+                <div class="selection-card" id="card-profesor" role="button" tabindex="0">
+                    <h2 class="card-title">Profesor</h2>
+                    <div class="card-icon profesor-icon">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Alumno (Estilo de image_1.png) -->
+            <form id="student-form" class="login-form" style="display: none;">
+                <button type="button" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+                <h2>Inicio de Sesión - Alumno</h2>
+                <div id="student-error" class="error-msg"></div>
+                <div class="form-group">
+                    <label for="student-account">No. de cuenta:</label>
+                    <input type="text" id="student-account" name="account" required>
+                </div>
+                <div class="form-group">
+                    <label for="student-password">Contraseña:</label>
+                    <input type="password" id="student-password" name="password" required>
+                </div>
+                <button type="submit" class="submit-btn">Iniciar Sesión</button>
+            </form>
+
+            <!-- Formulario de Profesor (Estilo de image_1.png) -->
+            <form id="professor-form" class="login-form" style="display: none;">
+                <button type="button" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+                <h2>Inicio de Sesión - Profesor</h2>
+                <div id="professor-error" class="error-msg"></div>
+                <div class="form-group">
+                    <label for="professor-account">Correo de Profesor:</label>
+                    <input type="email" id="professor-account" name="account" required>
+                </div>
+                <div class="form-group">
+                    <label for="professor-password">Contraseña:</label>
+                    <input type="password" id="professor-password" name="password" required>
+                </div>
+                <button type="submit" class="submit-btn">Iniciar Sesión</button>
+            </form>
+
+            <!-- Formulario de Admin (Oculto inicialmente, activado por botón en header) -->
+            <form id="admin-form" class="login-form" style="display: none;">
+                <button type="button" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+                <h2>Inicio de Sesión - Admin</h2>
+                <div id="admin-error" class="error-msg"></div>
+                <div class="form-group">
+                    <label for="admin-account">Correo de Administrador:</label>
+                    <input type="email" id="admin-account" name="account" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin-password">Contraseña:</label>
+                    <input type="password" id="admin-password" name="password" required>
+                </div>
+                <button type="submit" class="submit-btn">Iniciar Sesión</button>
+            </form>
+
+        </div>
+
+        <!-- Pie de página (Ayuda) -->
+        <footer class="login-footer">
+            <p>Si tienes problemas para acceder, por favor contacta al soporte técnico o ingresa a <a href="#">ayuda.unam.mx</a> o <a href="#">soporte.aragon.unam.mx</a>.</p>
+        </footer>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
