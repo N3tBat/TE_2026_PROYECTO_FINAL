@@ -17,32 +17,83 @@ Para asegurar que los desarrolladores y las inteligencias artificiales trabajen 
 
 ---
 
-## 2. Flujo de Trabajo API-First (Evitando Descoordinación)
+## 2. Flujo de Trabajo API-First (Contratos de la Sección de Administración)
 
-Para evitar que el backend y el frontend no encajen al integrarse, se trabajará bajo un **contrato de API acordado**. Antes de programar, se define el contrato JSON.
+Para garantizar la compatibilidad entre el frontend y el backend, acordamos y consolidamos los siguientes flujos e integraciones para el panel de **Administración**:
 
-### Contrato de Ejemplo para Registro de Horas (`RegistroHoras`):
-Cuando el Alumno registre entrada/salida, el frontend y el backend se comunicarán a través de este formato:
+### A. Autenticación e Información del Administrador
+* **Login**: `POST /api/auth/login`
+* **JSON de Respuesta**:
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1...",
+    "rol": "ROLE_ADMIN",
+    "nombre": "Dr. Jesús Martínez (Admin)"
+  }
+  ```
+* **Comportamiento**: El nombre y el rol se guardan en el navegador (`localStorage`) para renderizar dinámicamente el perfil del administrador en la cabecera sin hacer peticiones de consulta duplicadas.
 
-* **Registrar Entrada**:
-  * **Endpoint**: `POST /api/horas/entrada`
-  * **Petición (JSON)**: `{ "alumnoId": 1 }`
-  * **Respuesta**: `200 OK` con el objeto `RegistroHoras` creado (incluyendo ID de registro, fecha y hora de entrada).
+### B. Gestión de Profesores y Sincronización Automática
+* **Crear Profesor**: `POST /profesores`
+  * **JSON Enviado**:
+    ```json
+    {
+      "nombreCompleto": "Juliancito",
+      "correo": "juliancito@aragon.unam.mx",
+      "password": "contraseña_segura",
+      "carrera": "ICO"
+    }
+    ```
+  * **Lógica del Backend (Sincronizada)**: Al guardar el profesor, el backend crea en automático su cuenta de acceso correspondiente en la tabla de inicio de sesión (`usuarios`) con el rol de `PROFESOR` y encripta su contraseña de forma segura con `BCrypt`.
+* **Eliminar Profesor**: `DELETE /profesores/{id}`
+  * **Lógica del Backend (Sincronizada)**: Al dar de baja a un profesor, el backend busca su correo asociado y elimina automáticamente su usuario de inicio de sesión de la tabla de accesos para revocar accesos de inmediato.
+* **Editar Asignaciones de Proyectos**: `PATCH /profesores/{id}`
+  * **JSON Enviado**:
+    ```json
+    {
+      "programasAsignados": [
+        { "id": 1 },
+        { "id": 2 }
+      ]
+    }
+    ```
 
-* **Registrar Salida**:
-  * **Endpoint**: `POST /api/horas/salida`
-  * **Petición (JSON)**: `{ "alumnoId": 1, "actividades": "Apoyo en el laboratorio de cómputo y desarrollo de reportes." }`
-  * **Respuesta**: `200 OK` con el objeto `RegistroHoras` actualizado (calculando automáticamente las `horasCalculadas`).
+### C. Prevención de Recursión Infinita en JSON
+* En relaciones Muchos a Muchos bidireccionales, se rompió el bucle infinito aplicando la anotación `@JsonIgnore` al atributo `profesores` en el archivo [Programa.java](file:///c:/Users/chich/OneDrive/Desktop/ProyectoChuy/TE_2026_PROYECTO_FINAL/backend-api/src/main/java/mx/proyecto/backend_api/entities/Programa.java). Esto asegura que el backend pueda transferir datos limpios en formato JSON sin errores de StackOverflow al consumir `GET /profesores` y `GET /programas`.
 
 ---
 
-## 3. Asignación de Tareas - Sprint Actual
+## 3. Reglas de Negocio en la Sección de Profesores
 
-A continuación se detalla la asignación de responsabilidades inmediatas para avanzar de forma paralela:
+### A. Estandarización de Carreras
+Para evitar variaciones de escritura, el formulario de registro de profesores utiliza un menú desplegable (`<select>`) con las siglas de carreras de prueba acordadas:
+* **ICO** (Ingeniería en Computación)
+* **IEE** (Ingeniería Eléctrica y Electrónica)
+* **IM** (Ingeniería Mecánica)
+* **II** (Ingeniería Industrial)
+* **IC** (Ingeniería Civil)
 
-### 👤 Tarea de: Compañero de Equipo (Backend Developer)
+### B. Cálculo Dinámico del Estado del Profesor (Regla de las 2 Semanas)
+* **Vigencia de Proyectos**: Un proyecto se considera "Vigente" si su estado es `'activo'`. Si concluye (pasa su `fechaTermino`), entra en una **prórroga de 14 días naturales (2 semanas)** en la cual se le sigue computando como "Activo" en la interfaz.
+* **Estado del Profesor**: 
+  * Si el docente tiene asignado **al menos un proyecto** vigente o dentro de los 14 días de prórroga post-término ➡️ Su estado en pantalla cambia automáticamente a **"Activo"** (verde).
+  * Si el docente no tiene proyectos asignados o todos vencieron hace más de 14 días ➡️ Su estado en pantalla cambia automáticamente a **"Inactivo"** (gris).
+
+---
+
+## 4. Estado de Tareas - Sprint Actual
+
+### 🤖 Tarea de: Antigravity (AI Assistant) (Módulo Administrador y Core Completado)
+* [x] **Preparar credenciales por defecto:** Crear `DataSeeder.java` robusto con soporte para verificar datos previos antes de insertar para evitar duplicados. *(¡Completado!)*
+* [x] **Diseñar e integrar `admin.html` (Estilo Figma Mockup):** Barra lateral azul marino (`#003366`), logotipo de la UNAM FES Aragón con marco color oro (`#F4D35E`), tarjetas con bordes color oro y estadísticas en tiempo real. *(¡Completado!)*
+* [x] **Modal 1 - Consulta de Proyectos:** Pop-up responsivo que muestra el correo electrónico de contacto y enlista los proyectos del docente. *(¡Completado!)*
+* [x] **Modal 2 - Asignación de Proyectos:** Pop-up con checkboxes que enlista los programas activos y actualiza dinámicamente mediante `PATCH` la relación del profesor. *(¡Completado!)*
+* [x] **Dropdown select de Carreras:** Menú desplegable para estandarizar carreras (ICO, IEE, IM, II, IC). *(¡Completado!)*
+* [x] **Corrección de Recursión Infinita JSON:** Añadido `@JsonIgnore` en `Programa.java` para prevenir errores 500 al serializar. *(¡Completado!)*
+* [x] **Route Guarding:** Lógica de validación de seguridad de roles al cargar la página. *(¡Completado!)*
+
+### 👤 Tareas Siguientes: Compañero de Equipo (Backend Developer)
 **Objetivo:** Implementar la lógica y endpoints para el Registro y Control de Horas del Alumno.
-
 * [ ] **Crear Repositorio:**
   * Crear la interfaz `RegistroHorasRepository.java` en `mx.proyecto.backend_api.repositorios`.
   * Añadir consulta para obtener registros por alumno: `List<RegistroHoras> findByAlumnoId(Long alumnoId);`.
@@ -53,35 +104,7 @@ A continuación se detalla la asignación de responsabilidades inmediatas para a
 * [ ] **Crear Controlador REST:**
   * Crear `RegistroHorasController.java` en `mx.proyecto.backend_api.controladores`.
   * Exponer los endpoints `POST /api/horas/entrada`, `POST /api/horas/salida` y `GET /api/horas/alumno/{alumnoId}`.
-  * Proteger estos endpoints para que solo alumnos autenticados puedan registrar horas y profesores/admin puedan consultarlas.
-
-### 🤖 Tarea de: Antigravity (AI Assistant)
-**Objetivo:** Crear las pantallas de Dashboard correspondientes para cada rol del sistema con interfaz gráfica moderna y responsiva.
-
-* [x] **Preparar credenciales por defecto:** Crear `DataSeeder.java` para insertar automáticamente usuarios de prueba (`admin@aragon.unam.mx`, `profesor@aragon.unam.mx`, `alumno@aragon.unam.mx`) al arrancar el servidor. *(¡Completado!)*
-* [ ] **Diseñar `alumno.html` (Dashboard del Alumno):**
-  * Vista de horas totales acumuladas (barra de progreso visual).
-  * Tarjeta interactiva para Marcar Entrada / Salida (simulando reloj checador en tiempo real).
-  * Tabla responsiva con el historial de días registrados.
-* [ ] **Diseñar `profesor.html` (Dashboard del Profesor):**
-  * Panel con la lista de alumnos asignados a sus programas de servicio social.
-  * Vista de progreso de cada alumno.
-  * Herramienta rápida para autorizar/validar horas pendientes.
-* [ ] **Diseñar `admin.html` (Dashboard del Administrador):**
-  * Tablero general con estadísticas del sistema.
-  * Formulario interactivo para dar de alta Programas de Servicio Social.
-  * Panel de registro de nuevos profesores y alumnos.
-* [ ] **Implementar Seguridad de Rutas en Frontend:**
-  * Lógica en JavaScript para leer el JWT de `localStorage` y verificar el rol antes de cargar el contenido de las páginas. Redirigir a `index.html` si no hay sesión iniciada.
 
 ### 👤 Tarea de: Usuario (Coordinador / Integrador)
-**Objetivo:** Orquestar el proyecto, levantar contenedores e integrar las dos partes.
-
-* [ ] **Levantar la Infraestructura:** Ejecutar `docker-compose up --build` para compilar los cambios del backend y del frontend en contenedores.
-* [ ] **Validar Acceso:** Iniciar sesión con los usuarios creados por el `DataSeeder` y comprobar que las redirecciones del login funcionen correctamente.
-* [ ] **Integrar API Real:** Una vez que el compañero complete los endpoints de horas y Antigravity complete los HTMLs, coordinar el reemplazo de las respuestas simuladas del JavaScript por peticiones reales a la API.
-
----
-
-## 4. Compromisos y Comunicación
-Cualquier cambio de estructura en la base de datos o modificación de las firmas de los métodos REST definidos en la sección 2 debe ser notificado al resto del equipo inmediatamente para evitar roturas de compatibilidad. ¡Trabajemos en paralelo con orden para lograr una entrega exitosa!
+* [x] **Levantar la Infraestructura:** Ejecutar `docker-compose up --build` de forma exitosa. *(¡Completado!)*
+* [x] **Validar Acceso de Administrador y Registro:** Iniciar sesión y comprobar el guardado de profesores, la inyección del nombre dinámico, los pop-ups de consulta y las ediciones. *(¡Completado!)*

@@ -20,6 +20,9 @@ public class Usuario {
     @Column(nullable = false)
     private RolEnum rol;
 
+    @Column
+    private String nombreCompleto;
+
     // --- GETTERS Y SETTERS ---
 
     public Long getId() { return id; }
@@ -33,4 +36,7 @@ public class Usuario {
 
     public RolEnum getRol() { return rol; }
     public void setRol(RolEnum rol) { this.rol = rol; }
+
+    public String getNombreCompleto() { return nombreCompleto; }
+    public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
 }

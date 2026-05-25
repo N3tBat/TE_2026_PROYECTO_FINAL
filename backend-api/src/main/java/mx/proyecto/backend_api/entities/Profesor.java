@@ -14,6 +14,7 @@ public class Profesor {
     private String nombreCompleto;
     private String correo; // Para iniciar sesión
     private String password;
+    private String carrera;
 
     // Relación N:M con Programa (Un administrador asigna profesores a programas)
     @ManyToMany
@@ -37,6 +38,9 @@ public class Profesor {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getCarrera() { return carrera; }
+    public void setCarrera(String carrera) { this.carrera = carrera; }
 
     public List<Programa> getProgramasAsignados() { return programasAsignados; }
     public void setProgramasAsignados(List<Programa> programasAsignados) { this.programasAsignados = programasAsignados; }

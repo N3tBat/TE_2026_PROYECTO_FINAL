@@ -79,9 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Guardamos el token y rol devuelto por la API
                 localStorage.setItem('jwt_token', data.token);
                 localStorage.setItem('user_role', data.rol);
+                localStorage.setItem('user_name', data.nombre); // Guardamos el nombre
                 
                 // Redirigir según el rol devuelto por el Backend
-                if (data.rol === 'ADMIN') {
+                if (data.rol === 'ROLE_ADMIN' || data.rol === 'ADMIN') {
                     window.location.href = '/admin.html';
                 } else if (data.rol === 'PROFESOR') {
                     window.location.href = '/profesor.html';
